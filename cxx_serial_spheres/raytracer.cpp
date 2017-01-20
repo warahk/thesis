@@ -28,6 +28,8 @@
 #include <iostream>
 #include <cassert>
 
+#include "../ispc_spheres/timing.h"
+
 #if defined __linux__ || defined __APPLE__
 // "Compiled for Linux
 #else
@@ -215,10 +217,10 @@ Vec3f trace(
 // trace it and return a color. If the ray hits a sphere, we return the color of the
 // sphere at the intersection point, else we return the background color.
 //[/comment]
-void render(const std::vector<Sphere> &spheres)
+void render(Vec3f * image, unsigned width, unsigned height, 
+							const std::vector<Sphere> &spheres)
 {
-    unsigned width = 640, height = 480;
-    Vec3f *image = new Vec3f[width * height], *pixel = image;
+	Vec3f*pixel = image;
     float invWidth = 1 / float(width), invHeight = 1 / float(height);
     float fov = 30, aspectratio = width / float(height);
     float angle = tan(M_PI * 0.5 * fov / 180.);
@@ -232,16 +234,6 @@ void render(const std::vector<Sphere> &spheres)
             *pixel = trace(Vec3f(0), raydir, spheres, 0);
         }
     }
-    // Save result to a PPM image (keep these flags if you compile under Windows)
-    std::ofstream ofs("./untitled.ppm", std::ios::out | std::ios::binary);
-    ofs << "P6\n" << width << " " << height << "\n255\n";
-    for (unsigned i = 0; i < width * height; ++i) {
-        ofs << (unsigned char)(std::min(float(1), image[i].x) * 255) <<
-               (unsigned char)(std::min(float(1), image[i].y) * 255) <<
-               (unsigned char)(std::min(float(1), image[i].z) * 255);
-    }
-    ofs.close();
-    delete [] image;
 }
 
 //[comment]
@@ -252,6 +244,8 @@ void render(const std::vector<Sphere> &spheres)
 int main(int argc, char **argv)
 {
     srand48(13);
+    unsigned width = 640, height = 480;
+    Vec3f *image = new Vec3f[width * height];
     std::vector<Sphere> spheres;
     // position, radius, surface color, reflectivity, transparency, emission color
     spheres.push_back(Sphere(Vec3f( 0.0, -10004, -20), 10000, Vec3f(0.20, 0.20, 0.20), 0, 0.0));
@@ -261,7 +255,24 @@ int main(int argc, char **argv)
     spheres.push_back(Sphere(Vec3f(-5.5,      0, -15),     3, Vec3f(0.90, 0.90, 0.90), 1, 0.0));
     // light
     spheres.push_back(Sphere(Vec3f( 0.0,     20, -30),     3, Vec3f(0.00, 0.00, 0.00), 0, 0.0, Vec3f(3)));
-    render(spheres);
-    
+
+	// render and record elapsed time
+	reset_and_start_timer();
+    render(image, width, height, spheres);
+    double dt = get_elapsed_mcycles();
+	// print elapsed time
+	printf("@time of C++ serial run:\t\t\t[%.3f] million cycles\n", dt);
+
+    // Save result to a PPM image (keep these flags if you compile under Windows)
+    std::ofstream ofs("./untitled.ppm", std::ios::out | std::ios::binary);
+    ofs << "P6\n" << width << " " << height << "\n255\n";
+    for (unsigned i = 0; i < width * height; ++i) {
+        ofs << (unsigned char)(std::min(float(1), image[i].x) * 255) <<
+               (unsigned char)(std::min(float(1), image[i].y) * 255) <<
+               (unsigned char)(std::min(float(1), image[i].z) * 255);
+    }
+    ofs.close();
+    delete [] image;
+
     return 0;
 }
