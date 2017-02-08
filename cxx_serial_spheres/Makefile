@@ -8,5 +8,5 @@ clean:
 	rm -rf objs
 
 spheres: dirs 
-	g++ -o objs/$@ raytracer.cpp
+	g++ -o objs/$@ --std=c++11 raytracer.cpp
 

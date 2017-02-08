@@ -20,15 +20,17 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // [/ignore]
+#include <cassert>
 #include <cstdlib>
 #include <cstdio>
 #include <cmath>
-#include <fstream>
-#include <vector>
 #include <iostream>
-#include <cassert>
+#include <fstream>
+#include <string>
+#include <vector>
 
 #include "../ispc_spheres/timing.h"
+#include "../common/rand_sphere.h"
 
 #if defined __linux__ || defined __APPLE__
 // "Compiled for Linux
@@ -217,12 +219,12 @@ Vec3f trace(
 // trace it and return a color. If the ray hits a sphere, we return the color of the
 // sphere at the intersection point, else we return the background color.
 //[/comment]
-void render(Vec3f * image, unsigned width, unsigned height, 
+void render(Vec3f * image, unsigned width, unsigned height, float fov,
 							const std::vector<Sphere> &spheres)
 {
 	Vec3f*pixel = image;
     float invWidth = 1 / float(width), invHeight = 1 / float(height);
-    float fov = 30, aspectratio = width / float(height);
+    float aspectratio = width / float(height);
     float angle = tan(M_PI * 0.5 * fov / 180.);
     // Trace rays
     for (unsigned y = 0; y < height; ++y) {
@@ -243,28 +245,57 @@ void render(Vec3f * image, unsigned width, unsigned height,
 //[/comment]
 int main(int argc, char **argv)
 {
-    srand48(13);
-    unsigned width = 640, height = 480;
-    Vec3f *image = new Vec3f[width * height];
+	// parse command line args
+    if (argc != 4 && argc != 1) { 
+        std::cerr << "Usage: " << argv[0] << " <width> <height> <sphere_count>" << std::endl;
+        return EXIT_FAILURE; 
+    }   
+	
     std::vector<Sphere> spheres;
-    // position, radius, surface color, reflectivity, transparency, emission color
-    spheres.push_back(Sphere(Vec3f( 0.0, -10004, -20), 10000, Vec3f(0.20, 0.20, 0.20), 0, 0.0));
-    spheres.push_back(Sphere(Vec3f( 0.0,      0, -20),     4, Vec3f(1.00, 0.32, 0.36), 1, 0.5));
-    spheres.push_back(Sphere(Vec3f( 5.0,     -1, -15),     2, Vec3f(0.90, 0.76, 0.46), 1, 0.0));
-    spheres.push_back(Sphere(Vec3f( 5.0,      0, -25),     3, Vec3f(0.65, 0.77, 0.97), 1, 0.0));
-    spheres.push_back(Sphere(Vec3f(-5.5,      0, -15),     3, Vec3f(0.90, 0.90, 0.90), 1, 0.0));
-    // light
-    spheres.push_back(Sphere(Vec3f( 0.0,     20, -30),     3, Vec3f(0.00, 0.00, 0.00), 0, 0.0, Vec3f(3)));
+	float fov = 30;
+	unsigned width, height;
+	// default render
+	if (argc == 1) {
+	    width = 640, height = 480;
+	    // position, radius, surface color, reflectivity, transparency, emission color
+	    spheres.push_back(Sphere(Vec3f( 0.0, -10004, -20), 10000, Vec3f(0.20, 0.20, 0.20), 0, 0.0));
+	    spheres.push_back(Sphere(Vec3f( 0.0, 0, -20), 4, Vec3f(1.00, 0.32, 0.36), 1, 0.5));
+	    spheres.push_back(Sphere(Vec3f( 5.0, -1, -15), 2, Vec3f(0.90, 0.76, 0.46), 1, 0.0));
+	    spheres.push_back(Sphere(Vec3f( 5.0, 0, -25), 3, Vec3f(0.65, 0.77, 0.97), 1, 0.0));
+	    spheres.push_back(Sphere(Vec3f(-5.5, 0, -15), 3, Vec3f(0.90, 0.90, 0.90), 1, 0.0));
+	}
+	// custom render
+	else {
+		srand(time(NULL));
+		height = std::atoi(argv[1]);
+		width = std::atoi(argv[2]);
+		int sphere_count = std::atoi(argv[3]); 
+		unsigned radius = 2;
+		float x,y,z;
+		int count = 0;
+		// generate spheres within frustrum
+		while (count < sphere_count) {
+			rand_sphere(x, y, z, height, width, radius);
+			Vec3f color = Vec3f(random_float(0,1), random_float(0,1), random_float(0,1));
+			spheres.push_back(Sphere(Vec3f(x,y,z), 2, color, .5, .5));
+			count++;
+		}
+	}
+    Vec3f *image = new Vec3f[width * height];
+
+    // light sphere
+    spheres.push_back(Sphere(Vec3f( 0.0, 20, -30), 3, Vec3f(0.00, 0.00, 0.00), 0, 0.0, Vec3f(3)));
 
 	// render and record elapsed time
 	reset_and_start_timer();
-    render(image, width, height, spheres);
+    render(image, width, height, fov, spheres);
     double dt = get_elapsed_mcycles();
 	// print elapsed time
 	printf("@time of C++ serial run:\t\t\t[%.3f] million cycles\n", dt);
 
     // Save result to a PPM image (keep these flags if you compile under Windows)
-    std::ofstream ofs("./untitled.ppm", std::ios::out | std::ios::binary);
+	auto filename = "./" + std::to_string(height) + 'x' + std::to_string(width) + ".ppm";
+    std::ofstream ofs(filename, std::ios::out | std::ios::binary);
     ofs << "P6\n" << width << " " << height << "\n255\n";
     for (unsigned i = 0; i < width * height; ++i) {
         ofs << (unsigned char)(std::min(float(1), image[i].x) * 255) <<
