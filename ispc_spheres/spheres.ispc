@@ -32,27 +32,6 @@ struct Sphere {
     float emissionColor[3], surfaceColor[3];
 };
 
-/*
-
-// pass refence 2d array of float<3> / float3 to ispc somehow
-
-export void render(uniform Sphere *uniform spheres){
-	//float3 * pixel = &image; // should this have two astrics?
-
-	for (int y = 0; y < height; ++y) {
-		for (int x = 0; x < width; ++x) {
-			float xx = (2 * ((x + 0.5) * invWidth) - 1) * angle * aspectratio;
-			float yy = (1 - 2 * ((y + 0.5) * invHeight)) * angle;
-			float3 raydir = {xx, yy, -1};
-			Normalize(raydir);
-			int pixel_index = width * y + x;
-			float3 ray_orig = { 0, 0, 0 };
-			float3 pixel_color = trace(ray_orig, raydir, spheres, 0, size);
-			image[pixel_index] = pixel_color;
-		}
-	}
-}
-*/
 		
 static bool SphereIntersect(const uniform Sphere &sphere, 
 							const float3 &rayorig, 
@@ -77,7 +56,7 @@ static inline float mix(const float &a, const uniform float &b, const uniform fl
 }
 
 
-float3 trace(const float3 &rayorig, const float3 &raydir, const uniform Sphere spheres[], const uniform int depth, const uniform int size) {
+float3 trace(const float3 &rayorig, const float3 &raydir, const uniform Sphere spheres[], const uniform int depth, uniform int size) {
 	float tnear = INFINITY;
 	Sphere sphere;
 	bool intersect_found = false;
@@ -185,16 +164,15 @@ float3 trace(const float3 &rayorig, const float3 &raydir, const uniform Sphere s
 export void render(uniform float * uniform pixels_r, 
 	               uniform float * uniform pixels_g,
 	               uniform float * uniform pixels_b,
-				   uniform const int width, 
-				   uniform const int height,
+				   uniform int width, 
+				   uniform int height,
 				   uniform Sphere * uniform spheres,
-				   uniform const int sphere_count){
+				   uniform int sphere_count){
 	float invWidth = 1 / (float)width, invHeight = 1 / (float)height;
 	float fov = 30, aspectratio = width / (float)height;
 	float angle = tan(PI * 0.5 * fov / 180.);
 	// Trace rays
 	foreach_tiled(x = 0 ... width, y = 0 ... height){
-		//print("x,y: %,%\n", x, y);
 		float xx = (2 * ((x + 0.5) * invWidth) - 1) * angle * aspectratio;
 		float yy = (1 - 2 * ((y + 0.5) * invHeight)) * angle;
 		float3 raydir = {xx, yy, -1};

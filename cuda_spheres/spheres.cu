@@ -1,4 +1,5 @@
 #include <cmath>
+#include <cstdlib>
 #include <stdio.h>
 #include <stdlib.h>
 #include <iostream>
@@ -6,6 +7,8 @@
 
 // include ispc's timing.h for timing
 #include "../ispc_spheres/timing.h"
+// include rand_sphere for generating spheres
+#include "../common/rand_sphere.h"
 #define MAX_RAY_DEPTH 5
 
 
@@ -211,109 +214,147 @@ __global__ void render(float *gpu_pixels_r,
 }
 
 
-int main() {
-	printf("running!\n");
+int main(int argc, char **argv) {
+    // parse command line args
+    if (argc != 4 && argc != 1) {
+        std::cerr << "Usage: " << argv[0] << " <width> <height> <sphere_count>" << std::endl;
+        return EXIT_FAILURE;
+    }
 
-	// Allocate memory for Sphere arrays
 	Sphere *cpuSpheres;
 	Sphere *gpuSpheres;
-	const int numSpheres = 6;
 	int sphereSize = sizeof(Sphere);
-	int numBytes = numSpheres * sphereSize;
-
-	cpuSpheres = (Sphere*)malloc(numBytes);
-	cudaMalloc((void**)&gpuSpheres, numBytes);
+    int width, height, numSpheres, numBytes;
 		
 	// Define spheres
-	cpuSpheres[0].center[0] = 0.0;
-	cpuSpheres[0].center[1] = -10004;
-	cpuSpheres[0].center[2] = -20;
-	cpuSpheres[0].radius = 10000;
-	cpuSpheres[0].radius2 = 10000 * 10000;
-	cpuSpheres[0].surfaceColor[0] = 0.20;
-	cpuSpheres[0].surfaceColor[1] = 0.20;
-	cpuSpheres[0].surfaceColor[2] = 0.20;
-	cpuSpheres[0].reflection = 0.0;
-	cpuSpheres[0].transparency = 0.0;
-	cpuSpheres[0].emissionColor[0] = 0.0;
-	cpuSpheres[0].emissionColor[1] = 0.0;
-	cpuSpheres[0].emissionColor[2] = 0.0;
+    if (argc == 1) { 
+	    // Allocate memory for Sphere arrays
+        numSpheres = 6;
+        numBytes = numSpheres * sphereSize;
+        cpuSpheres = (Sphere*)malloc(numBytes);
+        cudaMalloc((void**)&gpuSpheres, numBytes);
 
-	cpuSpheres[1].center[0] = 0.0;
-	cpuSpheres[1].center[1] = 0;
-	cpuSpheres[1].center[2] = -20;
-	cpuSpheres[1].radius = 4;
-	cpuSpheres[1].radius2 = 16;
-	cpuSpheres[1].surfaceColor[0] = 1;
-	cpuSpheres[1].surfaceColor[1] = 0.32;
-	cpuSpheres[1].surfaceColor[2] = 0.36;
-	cpuSpheres[1].reflection = 1;
-	cpuSpheres[1].transparency = 0.5;
-	cpuSpheres[1].emissionColor[0] = 0.0;
-	cpuSpheres[1].emissionColor[1] = 0.0;
-	cpuSpheres[1].emissionColor[2] = 0.0;
-	
-	cpuSpheres[2].center[0] = 5;
-	cpuSpheres[2].center[1] = -1;
-	cpuSpheres[2].center[2] = -15;
-	cpuSpheres[2].radius = 2;
-	cpuSpheres[2].radius2 = 4;
-	cpuSpheres[2].surfaceColor[0] = .90;
-	cpuSpheres[2].surfaceColor[1] = 0.76;
-	cpuSpheres[2].surfaceColor[2] = 0.46;
-	cpuSpheres[2].reflection = 1;
-	cpuSpheres[2].transparency = 0;
-	cpuSpheres[2].emissionColor[0] = 0.0;
-	cpuSpheres[2].emissionColor[1] = 0.0;
-	cpuSpheres[2].emissionColor[2] = 0.0;
-	
-	cpuSpheres[3].center[0] = 5;
-	cpuSpheres[3].center[1] = 0;
-	cpuSpheres[3].center[2] = -25;
-	cpuSpheres[3].radius = 3;
-	cpuSpheres[3].radius2 = 9;
-	cpuSpheres[3].surfaceColor[0] = 0.65;
-	cpuSpheres[3].surfaceColor[1] = 0.77;
-	cpuSpheres[3].surfaceColor[2] = 0.97;
-	cpuSpheres[3].reflection = 1;
-	cpuSpheres[3].transparency = 0;
-	cpuSpheres[3].emissionColor[0] = 0.0;
-	cpuSpheres[3].emissionColor[1] = 0.0;
-	cpuSpheres[3].emissionColor[2] = 0.0;
+        cpuSpheres[0].center[0] = 0.0;
+        cpuSpheres[0].center[1] = -10004;
+        cpuSpheres[0].center[2] = -20;
+        cpuSpheres[0].radius = 10000;
+        cpuSpheres[0].radius2 = 10000 * 10000;
+        cpuSpheres[0].surfaceColor[0] = 0.20;
+        cpuSpheres[0].surfaceColor[1] = 0.20;
+        cpuSpheres[0].surfaceColor[2] = 0.20;
+        cpuSpheres[0].reflection = 0.0;
+        cpuSpheres[0].transparency = 0.0;
+        cpuSpheres[0].emissionColor[0] = 0.0;
+        cpuSpheres[0].emissionColor[1] = 0.0;
+        cpuSpheres[0].emissionColor[2] = 0.0;
 
-	cpuSpheres[4].center[0] = -5.5;
-	cpuSpheres[4].center[1] = 0;
-	cpuSpheres[4].center[2] = -15;
-	cpuSpheres[4].radius = 3;
-	cpuSpheres[4].radius2 = 9;
-	cpuSpheres[4].surfaceColor[0] = 0.90;
-	cpuSpheres[4].surfaceColor[1] = 0.90;
-	cpuSpheres[4].surfaceColor[2] = 0.90;
-	cpuSpheres[4].reflection = 1;
-	cpuSpheres[4].transparency = 0;
-	cpuSpheres[4].emissionColor[0] = 0.0;
-	cpuSpheres[4].emissionColor[1] = 0.0;
-	cpuSpheres[4].emissionColor[2] = 0.0;
-	
+        cpuSpheres[1].center[0] = 0.0;
+        cpuSpheres[1].center[1] = 0;
+        cpuSpheres[1].center[2] = -20;
+        cpuSpheres[1].radius = 4;
+        cpuSpheres[1].radius2 = 16;
+        cpuSpheres[1].surfaceColor[0] = 1;
+        cpuSpheres[1].surfaceColor[1] = 0.32;
+        cpuSpheres[1].surfaceColor[2] = 0.36;
+        cpuSpheres[1].reflection = 1;
+        cpuSpheres[1].transparency = 0.5;
+        cpuSpheres[1].emissionColor[0] = 0.0;
+        cpuSpheres[1].emissionColor[1] = 0.0;
+        cpuSpheres[1].emissionColor[2] = 0.0;
+        
+        cpuSpheres[2].center[0] = 5;
+        cpuSpheres[2].center[1] = -1;
+        cpuSpheres[2].center[2] = -15;
+        cpuSpheres[2].radius = 2;
+        cpuSpheres[2].radius2 = 4;
+        cpuSpheres[2].surfaceColor[0] = .90;
+        cpuSpheres[2].surfaceColor[1] = 0.76;
+        cpuSpheres[2].surfaceColor[2] = 0.46;
+        cpuSpheres[2].reflection = 1;
+        cpuSpheres[2].transparency = 0;
+        cpuSpheres[2].emissionColor[0] = 0.0;
+        cpuSpheres[2].emissionColor[1] = 0.0;
+        cpuSpheres[2].emissionColor[2] = 0.0;
+        
+        cpuSpheres[3].center[0] = 5;
+        cpuSpheres[3].center[1] = 0;
+        cpuSpheres[3].center[2] = -25;
+        cpuSpheres[3].radius = 3;
+        cpuSpheres[3].radius2 = 9;
+        cpuSpheres[3].surfaceColor[0] = 0.65;
+        cpuSpheres[3].surfaceColor[1] = 0.77;
+        cpuSpheres[3].surfaceColor[2] = 0.97;
+        cpuSpheres[3].reflection = 1;
+        cpuSpheres[3].transparency = 0;
+        cpuSpheres[3].emissionColor[0] = 0.0;
+        cpuSpheres[3].emissionColor[1] = 0.0;
+        cpuSpheres[3].emissionColor[2] = 0.0;
+
+        cpuSpheres[4].center[0] = -5.5;
+        cpuSpheres[4].center[1] = 0;
+        cpuSpheres[4].center[2] = -15;
+        cpuSpheres[4].radius = 3;
+        cpuSpheres[4].radius2 = 9;
+        cpuSpheres[4].surfaceColor[0] = 0.90;
+        cpuSpheres[4].surfaceColor[1] = 0.90;
+        cpuSpheres[4].surfaceColor[2] = 0.90;
+        cpuSpheres[4].reflection = 1;
+        cpuSpheres[4].transparency = 0;
+        cpuSpheres[4].emissionColor[0] = 0.0;
+        cpuSpheres[4].emissionColor[1] = 0.0;
+        cpuSpheres[4].emissionColor[2] = 0.0;
+    }
+    else {
+        // Read in argv
+        height = std::atoi(argv[1]);
+        width = std::atoi(argv[2]);
+        numSpheres = std::atoi(argv[3]);
+	    // Allocate memory for Sphere arrays
+        numBytes = numSpheres * sphereSize;
+        cpuSpheres = (Sphere*)malloc(numBytes);
+        cudaMalloc((void**)&gpuSpheres, numBytes);
+        // Generate random spheres within frustum
+        srand(time(NULL));
+        float x,y,z;
+        int count = 0;
+	    while (count < numSpheres - 1) {
+            rand_sphere(x, y, z, height, width, 2);
+            cpuSpheres[count].center[0] = x;
+            cpuSpheres[count].center[1] = y;
+            cpuSpheres[count].center[2] = z;
+            cpuSpheres[count].radius = 2;
+            cpuSpheres[count].radius2 = 4;
+            cpuSpheres[count].surfaceColor[0] = random_float(0,1);
+            cpuSpheres[count].surfaceColor[1] = random_float(0,1);
+            cpuSpheres[count].surfaceColor[2] = random_float(0,1);
+            cpuSpheres[count].reflection = 0.5;
+            cpuSpheres[count].transparency = 0.5;
+            cpuSpheres[count].emissionColor[0] = 0.0;
+            cpuSpheres[count].emissionColor[1] = 0.0;
+            cpuSpheres[count].emissionColor[2] = 0.0;
+            count++;
+        }
+    }   
+    
+
 	// light
-	cpuSpheres[5].center[0] = 0.0;
-	cpuSpheres[5].center[1] = 20;
-	cpuSpheres[5].center[2] = -30;
-	cpuSpheres[5].radius = 3;
-	cpuSpheres[5].radius2 = 9;
-	cpuSpheres[5].surfaceColor[0] = 0.0;
-	cpuSpheres[5].surfaceColor[1] = 0.0;
-	cpuSpheres[5].surfaceColor[2] = 0.0;
-	cpuSpheres[5].reflection = 0;
-	cpuSpheres[5].transparency = 0;
-	cpuSpheres[5].emissionColor[0] = 3.0;
-	cpuSpheres[5].emissionColor[1] = 3.0;
-	cpuSpheres[5].emissionColor[2] = 3.0;
+    int last = numSpheres - 1;
+	cpuSpheres[last].center[0] = 0.0;
+	cpuSpheres[last].center[1] = 20;
+	cpuSpheres[last].center[2] = -30;
+	cpuSpheres[last].radius = 3;
+	cpuSpheres[last].radius2 = 9;
+	cpuSpheres[last].surfaceColor[0] = 0.0;
+	cpuSpheres[last].surfaceColor[1] = 0.0;
+	cpuSpheres[last].surfaceColor[2] = 0.0;
+	cpuSpheres[last].reflection = 0;
+	cpuSpheres[last].transparency = 0;
+	cpuSpheres[last].emissionColor[0] = 3.0;
+	cpuSpheres[last].emissionColor[1] = 3.0;
+	cpuSpheres[last].emissionColor[2] = 3.0;
 
 	
 	// Allocate memory for pixel arrays
-	const int width = 640;
-	const int height = 480;
 	float *pixel_out_r = new float[width * height]; 
 	float *pixel_out_g = new float[width * height]; 
 	float *pixel_out_b = new float[width * height]; 
