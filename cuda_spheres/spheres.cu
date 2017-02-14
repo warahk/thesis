@@ -1,14 +1,15 @@
 #include <cmath>
+#include <fstream>
 #include <cstdlib>
+#include <iostream>
+
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <iostream>
-#include <fstream>
 
-// include ispc's timing.h for timing
 #include "../ispc_spheres/timing.h"
-// include rand_sphere for generating spheres
 #include "../common/rand_sphere.h"
+
 #define MAX_RAY_DEPTH 5
 
 
@@ -216,8 +217,8 @@ __global__ void render(float *gpu_pixels_r,
 
 int main(int argc, char **argv) {
     // parse command line args
-    if (argc != 4 && argc != 1) {
-        std::cerr << "Usage: " << argv[0] << " <width> <height> <sphere_count>" << std::endl;
+    if (argc != 5 && argc != 1) {
+        std::cerr << "Usage: " << argv[0] << " <width> <height> <sphere_count> <draw>" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -390,14 +391,16 @@ int main(int argc, char **argv) {
 
 	
     // Save result to a PPM image (keep these flags if you compile under Windows)
-    std::ofstream ofs("./CUDA_spheres.ppm", std::ios::out | std::ios::binary);
-    ofs << "P6\n" << width << " " << height << "\n255\n";
-    for (unsigned i = 0; i < width * height; ++i) {
-        ofs << (unsigned char)(std::min(float(1), pixel_out_r[i]) * 255) <<
-               (unsigned char)(std::min(float(1), pixel_out_g[i]) * 255) <<
-               (unsigned char)(std::min(float(1), pixel_out_b[i]) * 255);
-    }   
-    ofs.close();
+    if (tolower(argv[4][0]) == 'y') {
+        std::ofstream ofs("./CUDA_spheres.ppm", std::ios::out | std::ios::binary);
+        ofs << "P6\n" << width << " " << height << "\n255\n";
+        for (unsigned i = 0; i < width * height; ++i) {
+            ofs << (unsigned char)(std::min(float(1), pixel_out_r[i]) * 255) <<
+                   (unsigned char)(std::min(float(1), pixel_out_g[i]) * 255) <<
+                   (unsigned char)(std::min(float(1), pixel_out_b[i]) * 255);
+        }   
+        ofs.close();
+    }
 
 	// Deallocate memory
     delete [] pixel_out_r;

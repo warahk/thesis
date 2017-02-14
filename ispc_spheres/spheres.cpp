@@ -1,12 +1,12 @@
 #include <cstdlib>
+#include <fstream>
+#include <iostream>
+
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <iostream>
-#include <fstream>
 
-// include rand_sphere for sphere generation
 #include "../common/rand_sphere.h"
-// include ispc's timing.h for timing
 #include "timing.h"
 // include ispc generated stub header
 #include "spheres_ispc.h"
@@ -19,7 +19,7 @@ typedef unsigned int unit;
 int main(int argc, char **argv) {
 
     // parse command line args 
-    if (argc != 4 && argc != 1) {  
+    if (argc != 5 && argc != 1) {  
         std::cerr << "Usage: " << argv[0] << " <width> <height> <sphere_count>" << std::endl; 
         return EXIT_FAILURE;  
     } 
@@ -156,14 +156,16 @@ int main(int argc, char **argv) {
 	double dt = get_elapsed_mcycles();
 	printf("@time of ISPC run:\t\t\t[%.3f] million cycles\n", dt);
     // Save result to a PPM image (keep these flags if you compile under Windows)
-    std::ofstream ofs("./untitled.ppm", std::ios::out | std::ios::binary);
-    ofs << "P6\n" << width << " " << height << "\n255\n";
-    for (unsigned i = 0; i < width * height; ++i) {
-        ofs << (unsigned char)(std::min(float(1), pixel_out_r[i]) * 255) <<
-               (unsigned char)(std::min(float(1), pixel_out_g[i]) * 255) <<
-               (unsigned char)(std::min(float(1), pixel_out_b[i]) * 255);
-    }   
-    ofs.close();
+    if (tolower(argv[4][0]) == 'y') {
+        std::ofstream ofs("./untitled.ppm", std::ios::out | std::ios::binary);
+        ofs << "P6\n" << width << " " << height << "\n255\n";
+        for (unsigned i = 0; i < width * height; ++i) {
+            ofs << (unsigned char)(std::min(float(1), pixel_out_r[i]) * 255) <<
+                   (unsigned char)(std::min(float(1), pixel_out_g[i]) * 255) <<
+                   (unsigned char)(std::min(float(1), pixel_out_b[i]) * 255);
+        }   
+        ofs.close();
+    }
     delete [] pixel_out_r;
     delete [] pixel_out_g;
     delete [] pixel_out_b;

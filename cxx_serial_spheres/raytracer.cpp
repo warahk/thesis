@@ -24,10 +24,13 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cmath>
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <locale>
 #include <string>
 #include <vector>
+
+#include <ctype.h>
 
 #include "../ispc_spheres/timing.h"
 #include "../common/rand_sphere.h"
@@ -246,8 +249,8 @@ void render(Vec3f * image, unsigned width, unsigned height, float fov,
 int main(int argc, char **argv)
 {
 	// parse command line args
-    if (argc != 4 && argc != 1) { 
-        std::cerr << "Usage: " << argv[0] << " <width> <height> <sphere_count>" << std::endl;
+    if (argc != 5 && argc != 1) { 
+        std::cerr << "Usage: " << argv[0] << " <width> <height> <sphere_count> <draw>" << std::endl;
         return EXIT_FAILURE; 
     }   
 	
@@ -294,16 +297,18 @@ int main(int argc, char **argv)
 	printf("@time of C++ serial run:\t\t\t[%.3f] million cycles\n", dt);
 
     // Save result to a PPM image (keep these flags if you compile under Windows)
-	auto filename = "./" + std::to_string(height) + 'x' + std::to_string(width) + ".ppm";
-    std::ofstream ofs(filename, std::ios::out | std::ios::binary);
-    ofs << "P6\n" << width << " " << height << "\n255\n";
-    for (unsigned i = 0; i < width * height; ++i) {
-        ofs << (unsigned char)(std::min(float(1), image[i].x) * 255) <<
-               (unsigned char)(std::min(float(1), image[i].y) * 255) <<
-               (unsigned char)(std::min(float(1), image[i].z) * 255);
+    if (tolower(argv[4][0]) == 'y') {
+        auto filename = "./" + std::to_string(height) + 'x' + std::to_string(width) + ".ppm";
+        std::ofstream ofs(filename, std::ios::out | std::ios::binary);
+        ofs << "P6\n" << width << " " << height << "\n255\n";
+        for (unsigned i = 0; i < width * height; ++i) {
+            ofs << (unsigned char)(std::min(float(1), image[i].x) * 255) <<
+                   (unsigned char)(std::min(float(1), image[i].y) * 255) <<
+                   (unsigned char)(std::min(float(1), image[i].z) * 255);
+        }
+        ofs.close();
     }
-    ofs.close();
+    
     delete [] image;
-
     return 0;
 }
