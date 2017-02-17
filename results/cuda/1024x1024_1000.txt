@@ -1,0 +1,10 @@
+@time of CUDA run:			[8514.984] million cycles
+@time of CUDA run:			[8621.087] million cycles
+@time of CUDA run:			[8423.555] million cycles
+@time of CUDA run:			[8557.325] million cycles
+@time of CUDA run:			[8627.459] million cycles
+@time of CUDA run:			[8227.759] million cycles
+@time of CUDA run:			[8810.171] million cycles
+@time of CUDA run:			[8882.265] million cycles
+@time of CUDA run:			[8337.322] million cycles
+@time of CUDA run:			[8787.801] million cycles

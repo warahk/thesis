@@ -1,0 +1,10 @@
+@time of ISPC run:			[14300.749] million cycles
+@time of ISPC run:			[15423.564] million cycles
+@time of ISPC run:			[14118.525] million cycles
+@time of ISPC run:			[14933.062] million cycles
+@time of ISPC run:			[15030.543] million cycles
+@time of ISPC run:			[13240.497] million cycles
+@time of ISPC run:			[13979.359] million cycles
+@time of ISPC run:			[14485.104] million cycles
+@time of ISPC run:			[13913.922] million cycles
+@time of ISPC run:			[14155.956] million cycles

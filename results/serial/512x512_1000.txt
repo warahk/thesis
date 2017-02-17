@@ -1,0 +1,10 @@
+@time of C++ serial run:			[536043.889] million cycles
+@time of C++ serial run:			[521879.818] million cycles
+@time of C++ serial run:			[477071.788] million cycles
+@time of C++ serial run:			[501684.246] million cycles
+@time of C++ serial run:			[514935.461] million cycles
+@time of C++ serial run:			[529634.993] million cycles
+@time of C++ serial run:			[519324.882] million cycles
+@time of C++ serial run:			[487581.219] million cycles
+@time of C++ serial run:			[503084.654] million cycles
+@time of C++ serial run:			[521591.583] million cycles
