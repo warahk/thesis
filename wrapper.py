@@ -5,13 +5,14 @@ from shutil import rmtree
 from subprocess import check_output
 
 if __name__ == "__main__":
-    if os.path.exists('./results'):
-        rmtree('results')        
-    os.mkdir('results')
+    if os.path.exists('./results2'):
+        rmtree('results2')        
+    os.mkdir('results2')
     cmd = 'objs/spheres'
     methods = { 
                 'serial' : './cxx_serial_spheres/%s' % cmd,
                 'ispc' : './ispc_spheres/%s' % cmd,
+                'ispc_multicore' : '/ipsc_spheres_multicore/%s' % cmd,
                 'cuda' : './cuda_spheres/%s' % cmd 
               }  
     resolutions = [ '256', '512', '1024' ]
