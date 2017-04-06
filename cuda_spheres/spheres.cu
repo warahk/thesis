@@ -229,6 +229,7 @@ int main(int argc, char **argv) {
 		
 	// Define spheres
     if (argc == 1) { 
+        width = 640, height = 480;
 	    // Allocate memory for Sphere arrays
         numSpheres = 6;
         numBytes = numSpheres * sphereSize;
@@ -391,7 +392,7 @@ int main(int argc, char **argv) {
 
 	
     // Save result to a PPM image (keep these flags if you compile under Windows)
-    if (tolower(argv[4][0]) == 'y') {
+    if (tolower(argv[4][0]) == 'y' || argc == 1) {
         std::ofstream ofs("./CUDA_spheres.ppm", std::ios::out | std::ios::binary);
         ofs << "P6\n" << width << " " << height << "\n255\n";
         for (unsigned i = 0; i < width * height; ++i) {
