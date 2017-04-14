@@ -1,5 +1,6 @@
 *.ppm
 *.swp
+*.pyc
 cxx_serial_spheres/objs/*
 cuda_spheres/objs/*
 ispc_spheres/objs/*
